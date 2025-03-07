@@ -1,0 +1,98 @@
+services:
+
+  order-db:
+    image: mongo:latest
+    container_name: order-db
+    restart: always
+    networks:
+      - orchestrator-saga
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=admin
+      - MONGO_INITDB_ROOT_PASSWORD=123456
+    ports:
+      - 27017:27017
+
+  product-db:
+    image: postgres:latest
+    container_name: product-db
+    networks:
+      - orchestrator-saga
+    environment:
+      - POSTGRES_DB=product-db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - 5432:5432
+
+  payment-db:
+    image: postgres:latest
+    container_name: payment-db
+    networks:
+      - orchestrator-saga
+    environment:
+      - POSTGRES_DB=payment-db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - 5433:5432
+
+  inventory-db:
+    image: postgres:latest
+    container_name: inventory-db
+    networks:
+      - orchestrator-saga
+    environment:
+      - POSTGRES_DB=inventory-db
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+    ports:
+      - 5434:5432
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: zookeeper
+    restart: always
+    ports:
+      - "2181:2181"
+    networks:
+      - orchestrator-saga
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka
+    restart: always
+    ports:
+      - "9092:9092"
+    networks:
+      - orchestrator-saga
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+      KAFKA_ADVERTISED_LISTENERS: "PLAINTEXT://kafka:9092"
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    depends_on:
+      - zookeeper
+
+  redpanda-console:
+    container_name: redpanda
+    image: docker.redpanda.com/redpandadata/console:v2.3.8
+    restart: always
+    entrypoint: /bin/sh
+    command: -c "echo \"$$CONSOLE_CONFIG_FILE\" > /tmp/config.yml; /app/console"
+    ports:
+      - "8081:8080"
+    networks:
+      - orchestrator-saga
+    environment:
+      CONFIG_FILEPATH: /tmp/config.yml
+      CONSOLE_CONFIG_FILE: |
+        kafka:
+          brokers: ["kafka:9092"]
+    depends_on:
+      - "kafka"
+
+networks:
+  orchestrator-saga:
+    driver: bridge
