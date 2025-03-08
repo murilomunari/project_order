@@ -3,6 +3,17 @@ server:
 
 
 spring:
+  Kafka:
+    bootstrap-servers: ${KAFKA_BROKER:localhost:9092}
+    topic:
+      orchestrator: orchestrator
+      inventory-success: inventory-success
+      inventory-fail: inventory-fail
+    consumer:
+      group-id: order-group
+      auto-offset-reset: latest
+
+
   datasource:
     driver-class-name: org.postgresql.Driver
     url: jdbc:postgresql://localhost:5434/inventory-db
@@ -17,3 +28,10 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
+
+
+logging:
+  level:
+    org:
+      apache:
+        kafka: INFO
